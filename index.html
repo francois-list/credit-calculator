@@ -293,7 +293,7 @@ input[type=range] { width: 100%; accent-color: var(--purple); cursor: pointer; d
   <!-- ============ CREDITS ONLY ============ -->
 
   <div class="screen" id="credits-1">
-    <div class="step-num">Step 1 of 2</div>
+    <div class="step-num">Step 1 of 3</div>
     <div class="step-q">How many leads do you want to export per month?</div>
     <div class="step-hint">The number of contacts you plan to download from ListKit each month.</div>
     <div class="slider-section">
@@ -315,7 +315,7 @@ input[type=range] { width: 100%; accent-color: var(--purple); cursor: pointer; d
   </div>
 
   <div class="screen" id="credits-2">
-    <div class="step-num">Step 2 of 2</div>
+    <div class="step-num">Step 2 of 3</div>
     <div class="step-q">What contact info do you need?</div>
     <div class="step-hint">Select everything that applies. You can mix and match.</div>
     <div class="options" id="cr-contact-opts">
@@ -340,8 +340,38 @@ input[type=range] { width: 100%; accent-color: var(--purple); cursor: pointer; d
         <span class="opt-cost">1 cr / lead</span>
       </div>
     </div>
-    <button class="continue-btn" onclick="showCreditsResult()">Calculate my credits &rarr;</button>
+    <button class="continue-btn" onclick="goCredits(3)">Continue &rarr;</button>
     <button class="back-btn" onclick="goCredits(1)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="credits-3">
+    <div class="step-num">Step 3 of 3</div>
+    <div class="step-q">Will you send emails through ListKit?</div>
+    <div class="step-hint">ListKit's email engine costs 0.1 credits per email sent. If you use your own sending tool, no extra credits are needed.</div>
+    <div class="options" id="cr-engine-opts">
+      <div class="opt selected" onclick="selectCrEngine(this, true)">
+        <div class="radio"></div>
+        <div class="opt-body"><div class="opt-title">Yes, send from ListKit <span class="rec-badge">Recommended</span></div><div class="opt-desc">0.1 credits per email sent via ListKit's email engine</div></div>
+      </div>
+      <div class="opt" onclick="selectCrEngine(this, false)">
+        <div class="radio"></div>
+        <div class="opt-body"><div class="opt-title">No, I'll use my own tool</div><div class="opt-desc">No email engine credits needed</div></div>
+      </div>
+    </div>
+    <div id="cr-seq-section">
+      <div class="step-q" style="font-size:18px;margin-top:2rem">How many emails are in your sequence?</div>
+      <div class="step-hint">A 3-step sequence means you send 3 follow-up emails per lead<br><strong>Industry benchmark:</strong> 3&ndash;4 emails is the sweet spot for cold outreach</div>
+      <div class="options" id="cr-seq-options">
+        <div class="opt" onclick="selectCrSeq(this,1)"><div class="radio"></div><div class="opt-body"><div class="opt-title">1 email</div><div class="opt-desc">Single touch</div></div></div>
+        <div class="opt" onclick="selectCrSeq(this,2)"><div class="radio"></div><div class="opt-body"><div class="opt-title">2 emails</div></div></div>
+        <div class="opt selected" onclick="selectCrSeq(this,3)"><div class="radio"></div><div class="opt-body"><div class="opt-title">3 emails <span class="rec-badge">Recommended</span></div></div></div>
+        <div class="opt" onclick="selectCrSeq(this,4)"><div class="radio"></div><div class="opt-body"><div class="opt-title">4 emails</div></div></div>
+        <div class="opt" onclick="selectCrSeq(this,5)"><div class="radio"></div><div class="opt-body"><div class="opt-title">5 emails</div></div></div>
+      </div>
+    </div>
+    <div class="live-output" id="cr-engine-out"></div>
+    <button class="continue-btn" onclick="showCreditsResult()">Calculate my credits &rarr;</button>
+    <button class="back-btn" onclick="goCredits(2)">&larr; Back</button>
   </div>
 
   <div class="screen" id="credits-result">
@@ -405,7 +435,7 @@ const S = {
   ltv: 5000, clients_goal: 5, close_rate: 20, show_rate: 70, booking_rate: 60,
   positive_reply_rate: 5, reply_rate: 3, seq_steps: 3,
   calls: 0, meetings: 0, pos_replies: 0, tot_replies: 0, emails: 0, leads: 0,
-  cr_leads: 1000, cr_contact: ['verified'],
+  cr_leads: 1000, cr_contact: ['verified'], cr_use_engine: true, cr_seq_steps: 3,
   ib_emails: 10000, ib_per_inbox: 20, ib_days: 20,
   full_contact: ['verified'], full_per_inbox: 20, full_days: 20
 };
@@ -433,7 +463,7 @@ function setMode(mode) {
 
 function updateProgress() {
   const wrap = $('progress-wrap');
-  const total = S.mode === 'full' ? 8 : S.mode === 'credits' ? 2 : 3;
+  const total = S.mode === 'full' ? 8 : S.mode === 'credits' ? 3 : 3;
   let cur = 1;
   const active = document.querySelector('.screen.active');
   if (active) {
@@ -654,15 +684,42 @@ function setCrLeads(v) {
 }
 function toggleCrContact(el, val) { toggleContact(el, val, S, 'cr_contact', 'cr-contact-opts'); }
 
+function selectCrEngine(el, val) {
+  S.cr_use_engine = val;
+  document.querySelectorAll('#cr-engine-opts .opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  $('cr-seq-section').style.display = val ? '' : 'none';
+  updateCrEngineOut();
+}
+function selectCrSeq(el, n) {
+  S.cr_seq_steps = n;
+  document.querySelectorAll('#cr-seq-options .opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  updateCrEngineOut();
+}
+function updateCrEngineOut() {
+  if (!S.cr_use_engine) { $('cr-engine-out').innerHTML = '<strong>No email engine credits needed</strong> &mdash; you\'ll use your own sending tool'; return; }
+  const emails = S.cr_leads * S.cr_seq_steps;
+  const engineCr = Math.ceil(emails * 0.1);
+  $('cr-engine-out').innerHTML = fmt(S.cr_leads) + ' leads &times; ' + S.cr_seq_steps + ' emails = <strong>' + fmt(emails) + ' emails</strong> &rarr; ' + fmt(engineCr) + ' email engine credits';
+}
+
 function showCreditsResult() {
   const perLead = S.cr_contact.reduce((s, t) => s + (CREDITS[t] || 0), 0);
-  const total = S.cr_leads * perLead;
+  const contactCr = S.cr_leads * perLead;
+  const emails = S.cr_use_engine ? S.cr_leads * S.cr_seq_steps : 0;
+  const engineCr = Math.ceil(emails * 0.1);
+  const total = contactCr + engineCr;
   const nameMap = { email: 'Email', verified: 'Verified email', phone: 'Phone number', linkedin: 'LinkedIn URL' };
   let h = '<div class="result-card accent-blue"><div class="result-card-title">Credits Needed</div>';
   h += '<div class="result-card-big">' + fmt(total) + ' <span>credits / month</span></div>';
-  h += '<div class="result-card-sub">' + fmt(S.cr_leads) + ' leads &times; ' + perLead + ' credits per lead</div>';
+  h += '<div style="font-size:13px;color:var(--tx2);margin-bottom:16px;line-height:1.8">';
+  h += 'Contact info: ' + fmt(S.cr_leads) + ' leads &times; ' + perLead + ' cr = <strong>' + fmt(contactCr) + '</strong> credits';
+  if (S.cr_use_engine) h += '<br>Email engine: ' + fmt(emails) + ' emails &times; 0.1 cr = <strong>' + fmt(engineCr) + '</strong> credits';
+  h += '</div>';
   h += '<div style="margin-bottom:16px">';
   S.cr_contact.forEach(t => { h += '<div class="edit-row"><span class="edit-label">' + nameMap[t] + ' (' + CREDITS[t] + ' cr/lead)</span><span style="font-weight:600;color:var(--purple)">' + fmt(S.cr_leads * CREDITS[t]) + ' credits</span></div>'; });
+  if (S.cr_use_engine) h += '<div class="edit-row"><span class="edit-label">Email engine (0.1 cr/email)</span><span style="font-weight:600;color:var(--purple)">' + fmt(engineCr) + ' credits</span></div>';
   h += '</div>';
   h += renderPlans(total);
   if (!S.cr_contact.includes('verified') && S.cr_contact.includes('email'))
