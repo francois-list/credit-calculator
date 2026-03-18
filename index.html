@@ -3,370 +3,706 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ListKit Credit Calculator</title>
+<title>ListKit Calculator</title>
 <style>
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --color-background-primary: #ffffff;
-  --color-background-secondary: #f9f9f8;
-  --color-background-tertiary: #f2f1ef;
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #6b6b6b;
-  --color-text-tertiary: #999999;
-  --color-border-secondary: #d9d9d9;
-  --color-border-tertiary: #e8e8e8;
-  --border-radius-lg: 12px;
-  --border-radius-md: 8px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --bg1: #ffffff; --bg2: #f9f9fb; --bg3: #f0eef5;
+  --tx1: #1a1a2e; --tx2: #5a5a7a; --tx3: #8e8ea0;
+  --bd2: #d4d4e0; --bd3: #e8e8f0;
+  --r-lg: 16px; --r-md: 10px;
+  --purple: #7F77DD; --purple-dk: #5B52C4; --purple-bg: #EEEDFE; --purple-bd: #AFA9EC;
+  --green: #16a34a; --green-bg: #dcfce7; --green-dk: #15803d;
+  --red: #dc2626; --red-bg: #fee2e2;
+  --blue: #2563eb; --blue-bg: #dbeafe;
+  --amber: #d97706; --amber-bg: #fef3c7;
+  --teal: #0d9488; --teal-bg: #ccfbf1;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0 }
-body { font-family: var(--font-sans); background: var(--color-background-tertiary) }
-.app { max-width: 600px; margin: 0 auto; padding: 2rem 1.25rem }
-.brand { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-tertiary); margin-bottom: 1.5rem }
+body { font-family: var(--font); background: linear-gradient(160deg, #f5f3ff 0%, var(--bg3) 50%, #e8e5f0 100%); min-height: 100vh }
+.app { max-width: 640px; margin: 0 auto; padding: 2.5rem 1.5rem 3rem }
+
+.brand { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem }
+.brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--purple), var(--purple-dk)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px }
+.brand-text { font-size: 13px; font-weight: 600; color: var(--tx2); letter-spacing: 0.02em }
+.brand-text span { color: var(--purple); font-weight: 700 }
+
+.mode-tabs { display: flex; gap: 4px; margin-bottom: 2rem; background: white; border-radius: var(--r-md); padding: 4px; box-shadow: 0 1px 4px rgba(127,119,221,0.08), 0 0 0 1px rgba(127,119,221,0.06) }
+.mode-tab { flex: 1; padding: 10px 6px; font-size: 13px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; background: transparent; color: var(--tx3); font-family: var(--font); transition: all 0.2s }
+.mode-tab.active { background: linear-gradient(135deg, var(--purple), var(--purple-dk)); color: white; box-shadow: 0 2px 8px rgba(127,119,221,0.3) }
+.mode-tab:hover:not(.active) { color: var(--purple); background: var(--purple-bg) }
+
+.progress-wrap { display: flex; gap: 6px; margin-bottom: 2.5rem; align-items: center }
+.progress-step { flex: 1; height: 5px; border-radius: 3px; background: var(--bd3); transition: all 0.4s }
+.progress-step.done { background: linear-gradient(90deg, var(--purple), var(--purple-dk)); box-shadow: 0 1px 4px rgba(127,119,221,0.25) }
+.progress-label { font-size: 12px; font-weight: 500; color: var(--tx3); margin-left: 10px; white-space: nowrap }
 
 .screen { display: none }
-.screen.active { display: block }
+.screen.active { display: block; animation: fadeIn 0.3s ease }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
 
-.progress-wrap { display: flex; gap: 6px; margin-bottom: 2rem; align-items: center }
-.progress-step { flex: 1; height: 3px; border-radius: 2px; background: var(--color-border-tertiary); transition: background 0.3s }
-.progress-step.done { background: #7F77DD }
-.progress-label { font-size: 11px; color: var(--color-text-tertiary); margin-left: 8px; white-space: nowrap }
+.step-num { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--purple); margin-bottom: 12px; display: flex; align-items: center; gap: 6px }
+.step-num::before { content: ''; width: 20px; height: 2px; background: var(--purple); border-radius: 1px }
+.step-q { font-size: 24px; font-weight: 600; color: var(--tx1); line-height: 1.3; margin-bottom: 10px }
+.step-hint { font-size: 14px; color: var(--tx2); margin-bottom: 2.5rem; line-height: 1.6 }
+.step-hint strong { color: var(--purple-dk); font-weight: 600 }
 
-.step-num { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: #7F77DD; margin-bottom: 10px }
-.step-q { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1.3; margin-bottom: 8px }
-.step-hint { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 2rem; line-height: 1.5 }
+.big-input-wrap { text-align: center; margin-bottom: 2rem }
+.big-input { font-size: 52px; font-weight: 600; color: var(--purple); border: none; border-bottom: 3px solid var(--bd3); background: transparent; text-align: center; width: 100%; outline: none; padding: 10px 0; font-family: var(--font); -moz-appearance: textfield; transition: border-color 0.2s }
+.big-input:focus { border-bottom-color: var(--purple) }
+.big-input::-webkit-inner-spin-button, .big-input::-webkit-outer-spin-button { -webkit-appearance: none }
+.big-input-label { font-size: 14px; color: var(--tx3); margin-top: 10px; font-weight: 500 }
 
+.rate-display { display: flex; align-items: baseline; justify-content: center; margin-bottom: 6px }
+.rate-num { font-size: 52px; font-weight: 600; color: var(--purple); border: none; background: transparent; text-align: right; outline: none; font-family: var(--font); -moz-appearance: textfield; width: 130px }
+.rate-num::-webkit-inner-spin-button, .rate-num::-webkit-outer-spin-button { -webkit-appearance: none }
+.rate-suffix { font-size: 22px; color: var(--tx3); margin-left: 2px; font-weight: 500 }
+
+.slider-sub { font-size: 12px; color: var(--tx3); margin-bottom: 1.25rem; text-align: center; font-weight: 500 }
 .slider-section { margin-bottom: 2rem }
-.slider-big-val { font-size: 48px; font-weight: 500; color: #7F77DD; line-height: 1; margin-bottom: 4px }
-.slider-big-val span { font-size: 16px; font-weight: 400; color: var(--color-text-secondary); margin-left: 4px }
-.slider-sub { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 1.5rem }
-.slider-outer { margin: 0 -1.25rem; padding: 0 1.25rem }
-input[type=range] { width: 100%; accent-color: #7F77DD; cursor: pointer; display: block; margin-bottom: 8px; height: 24px }
-.slider-minmax { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-tertiary) }
-.quick-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem }
-.qb { padding: 5px 14px; font-size: 12px; border: 1.5px solid var(--color-border-secondary); border-radius: 20px; background: transparent; color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); transition: all 0.1s }
-.qb:hover, .qb.active { border-color: #7F77DD; color: #7F77DD; background: #EEEDFE }
+.slider-big-val { font-size: 52px; font-weight: 600; color: var(--purple); line-height: 1; margin-bottom: 6px; text-align: center }
+.slider-big-val span { font-size: 16px; font-weight: 500; color: var(--tx3); margin-left: 4px }
+input[type=range] { width: 100%; accent-color: var(--purple); cursor: pointer; display: block; margin-bottom: 8px; height: 28px }
+.slider-minmax { display: flex; justify-content: space-between; font-size: 11px; color: var(--tx3); font-weight: 500 }
 
-.options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem }
-.opt { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); cursor: pointer; transition: all 0.15s; background: var(--color-background-primary) }
-.opt:hover { border-color: #AFA9EC; background: #EEEDFE }
-.opt.selected { border-color: #7F77DD; background: #EEEDFE }
-.radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #888780; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--color-background-primary) }
-.opt.selected .radio { border-color: #7F77DD; background: #7F77DD }
-.opt.selected .radio::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: white; display: block }
-.checkbox { width: 20px; height: 20px; border-radius: 5px; border: 2px solid #888780; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--color-background-primary) }
-.opt.selected .checkbox { border-color: #7F77DD; background: #7F77DD }
+.live-output { background: linear-gradient(135deg, var(--purple-bg), #f0eeff); border-left: 4px solid var(--purple); border-radius: 0 var(--r-md) var(--r-md) 0; padding: 14px 18px; font-size: 15px; color: var(--tx1); line-height: 1.5; margin-top: 2rem; margin-bottom: 0.5rem }
+.live-output strong { color: var(--purple-dk); font-weight: 700 }
+
+.quick-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1.25rem }
+.qb { padding: 7px 16px; font-size: 13px; font-weight: 500; border: 2px solid var(--bd3); border-radius: 24px; background: white; color: var(--tx2); cursor: pointer; font-family: var(--font); transition: all 0.15s }
+.qb:hover, .qb.active { border-color: var(--purple); color: var(--purple); background: var(--purple-bg) }
+
+.options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem }
+.opt { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 2px solid var(--bd3); border-radius: var(--r-lg); cursor: pointer; transition: all 0.2s; background: white }
+.opt:hover { border-color: var(--purple-bd); background: var(--purple-bg); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(127,119,221,0.1) }
+.opt.selected { border-color: var(--purple); background: var(--purple-bg); box-shadow: 0 2px 12px rgba(127,119,221,0.15) }
+.radio { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid var(--bd2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: white }
+.opt.selected .radio { border-color: var(--purple); background: var(--purple) }
+.opt.selected .radio::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: white; display: block }
+.checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2.5px solid var(--bd2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: white }
+.opt.selected .checkbox { border-color: var(--purple); background: var(--purple) }
 .opt.selected .checkbox::after { content: ''; width: 11px; height: 7px; border-left: 2.5px solid white; border-bottom: 2.5px solid white; transform: rotate(-45deg); margin-top: -2px; display: block }
 .opt-body { flex: 1 }
-.opt-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary) }
-.opt-desc { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px }
-.opt-cost { font-size: 13px; font-weight: 500; color: #7F77DD; flex-shrink: 0 }
-.rec-badge { font-size: 10px; background: #EAF3DE; color: #3B6D11; padding: 1px 7px; border-radius: 20px; margin-left: 6px; font-weight: 500 }
+.opt-title { font-size: 15px; font-weight: 600; color: var(--tx1) }
+.opt-desc { font-size: 12px; color: var(--tx3); margin-top: 3px }
+.opt-cost { font-size: 13px; font-weight: 600; color: var(--purple); flex-shrink: 0 }
+.rec-badge { font-size: 10px; background: var(--green-bg); color: var(--green-dk); padding: 2px 8px; border-radius: 20px; margin-left: 6px; font-weight: 600 }
 
-.continue-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 500; background: #7F77DD; color: white; border: none; border-radius: var(--border-radius-lg); cursor: pointer; transition: all 0.15s; margin-top: 8px }
-.continue-btn:hover { background: #534AB7 }
-.back-btn { width: 100%; padding: 10px; font-size: 13px; color: var(--color-text-tertiary); background: transparent; border: none; cursor: pointer; margin-top: 8px }
-.back-btn:hover { color: var(--color-text-primary) }
+.continue-btn { width: 100%; padding: 16px; font-size: 16px; font-weight: 600; background: linear-gradient(135deg, var(--purple), var(--purple-dk)); color: white; border: none; border-radius: var(--r-lg); cursor: pointer; transition: all 0.2s; margin-top: 12px; box-shadow: 0 4px 12px rgba(127,119,221,0.3) }
+.continue-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(127,119,221,0.4) }
+.back-btn { width: 100%; padding: 12px; font-size: 14px; font-weight: 500; color: var(--tx3); background: transparent; border: none; cursor: pointer; margin-top: 8px; transition: color 0.15s }
+.back-btn:hover { color: var(--purple) }
 
-.result-screen {}
-.result-hero { text-align: center; padding: 2rem 0 1.5rem }
-.result-big { font-size: 64px; font-weight: 500; color: #7F77DD; line-height: 1 }
-.result-big span { font-size: 18px; font-weight: 400; color: var(--color-text-secondary) }
-.result-sub { font-size: 14px; color: var(--color-text-secondary); margin-top: 8px }
-.breakdown { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 1.25rem }
-.brow { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-tertiary) }
-.brow:last-child { border-bottom: none; background: var(--color-background-secondary) }
-.brow-label { font-size: 13px; color: var(--color-text-secondary) }
-.brow-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary) }
-.brow:last-child .brow-label { font-weight: 500; color: var(--color-text-primary); font-size: 14px }
-.brow:last-child .brow-val { color: #7F77DD; font-size: 16px }
-.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem }
-.plan { background: var(--color-background-primary); border: 1.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 12px; text-align: center; position: relative }
-.plan.best { border-color: #7F77DD; border-width: 2.5px; box-shadow: 0 0 0 4px #EEEDFE }
-.plan-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #7F77DD; color: white; font-size: 10px; padding: 2px 10px; border-radius: 20px; white-space: nowrap }
-.plan-name { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px }
-.plan-creds { font-size: 18px; font-weight: 500; color: var(--color-text-primary) }
-.plan-creds span { font-size: 11px; font-weight: 400; color: var(--color-text-tertiary) }
-.plan-status { font-size: 11px; margin-top: 6px; font-weight: 500 }
-.ok { color: #3B6D11 }
-.short { color: #A32D2D }
-.tip { background: #E6F1FB; border-radius: var(--border-radius-md); padding: 12px 16px; font-size: 13px; color: #185FA5; line-height: 1.5; margin-bottom: 1.25rem }
-.restart { width: 100%; padding: 12px; font-size: 13px; color: var(--color-text-tertiary); background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); cursor: pointer }
-.restart:hover { background: var(--color-background-secondary) }
+.result-card { background: white; border-radius: var(--r-lg); padding: 28px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: relative; overflow: hidden }
+.result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px }
+.result-card.accent-purple::before { background: linear-gradient(90deg, var(--purple), var(--purple-dk)) }
+.result-card.accent-blue::before { background: linear-gradient(90deg, #5B8DEF, var(--blue)) }
+.result-card.accent-teal::before { background: linear-gradient(90deg, var(--teal), #0f766e) }
+.result-card.accent-amber::before { background: linear-gradient(90deg, var(--amber), #b45309) }
+.result-card.accent-green::before { background: linear-gradient(90deg, var(--green), var(--green-dk)) }
+.result-card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tx3); margin-bottom: 16px; display: flex; align-items: center; gap: 8px }
+.result-card-big { font-size: 44px; font-weight: 700; color: var(--purple); line-height: 1; margin-bottom: 6px }
+.result-card-big span { font-size: 15px; color: var(--tx3); font-weight: 500; margin-left: 4px }
+.result-card-sub { font-size: 13px; color: var(--tx2); margin-bottom: 16px; line-height: 1.5 }
+
+/* Visual Funnel */
+.funnel { margin-top: 20px; display: flex; flex-direction: column; align-items: center }
+.funnel-bar { padding: 10px 16px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; color: white; font-weight: 600; margin: 3px 0; transition: all 0.3s; min-width: 200px }
+.funnel-bar-num { font-size: 17px; font-weight: 700 }
+.funnel-bar-label { font-size: 12px; font-weight: 500; opacity: 0.9; text-align: right }
+.funnel-bar.highlight { box-shadow: 0 4px 16px rgba(0,0,0,0.15); transform: scale(1.02); border: 2px solid rgba(255,255,255,0.3) }
+.funnel-connector { font-size: 11px; color: var(--tx3); text-align: center; padding: 2px 0; font-weight: 500 }
+
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px }
+.plan { background: var(--bg2); border: 2px solid var(--bd3); border-radius: var(--r-lg); padding: 16px 12px; text-align: center; position: relative; transition: all 0.2s }
+.plan.best { border-color: var(--purple); background: var(--purple-bg); box-shadow: 0 4px 16px rgba(127,119,221,0.2) }
+.plan-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--purple), var(--purple-dk)); color: white; font-size: 10px; font-weight: 600; padding: 3px 12px; border-radius: 20px; white-space: nowrap; box-shadow: 0 2px 6px rgba(127,119,221,0.3) }
+.plan-name { font-size: 12px; color: var(--tx3); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em }
+.plan-creds { font-size: 20px; font-weight: 700; color: var(--tx1) }
+.plan-creds span { font-size: 11px; font-weight: 500; color: var(--tx3) }
+.plan-price { font-size: 13px; color: var(--tx2); margin-top: 2px; font-weight: 600 }
+.plan-status { font-size: 12px; margin-top: 8px; font-weight: 600 }
+.ok { color: var(--green) }
+.short { color: var(--red) }
+
+.edit-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--bd3) }
+.edit-row:last-of-type { border-bottom: none }
+.edit-label { font-size: 14px; color: var(--tx2); font-weight: 500 }
+.edit-input { width: 72px; padding: 8px 10px; font-size: 15px; font-weight: 600; border: 2px solid var(--bd3); border-radius: 8px; text-align: center; font-family: var(--font); color: var(--tx1); transition: border-color 0.2s }
+.edit-input:focus { outline: none; border-color: var(--purple) }
+
+.tip { background: var(--blue-bg); border-radius: var(--r-md); padding: 14px 18px; font-size: 13px; color: var(--blue); line-height: 1.6; margin-bottom: 16px; font-weight: 500; border-left: 4px solid var(--blue) }
+.tip.tip-green { background: var(--green-bg); color: var(--green-dk); border-left-color: var(--green) }
+.restart { width: 100%; padding: 14px; font-size: 14px; font-weight: 600; color: var(--tx3); background: white; border: 2px solid var(--bd3); border-radius: var(--r-lg); cursor: pointer; margin-top: 12px; transition: all 0.2s }
+.restart:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-bg) }
 
 @media (max-width: 480px) {
-  .plans { grid-template-columns: 1fr; }
-  .result-big { font-size: 48px; }
-  .slider-big-val { font-size: 36px; }
+  .app { padding: 1.5rem 1rem 2rem }
+  .plans { grid-template-columns: 1fr }
+  .result-card-big { font-size: 34px }
+  .rate-num, .big-input, .slider-big-val { font-size: 40px }
+  .mode-tab { font-size: 11px; padding: 8px 3px }
+  .step-q { font-size: 20px }
+  .funnel-bar { padding: 8px 12px; min-width: 150px }
+  .funnel-bar-num { font-size: 14px }
+  .funnel-bar-label { font-size: 10px }
 }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="brand">ListKit &middot; Credit Calculator</div>
-
-  <div class="progress-wrap">
-    <div class="progress-step" id="p1"></div>
-    <div class="progress-step" id="p2"></div>
-    <div class="progress-step" id="p3"></div>
-    <span class="progress-label" id="p-label">Step 1 of 3</span>
+  <div class="brand">
+    <div class="brand-icon">LK</div>
+    <div class="brand-text"><span>ListKit</span> Calculator</div>
   </div>
 
-  <!-- STEP 1 -->
-  <div class="screen active" id="s1">
-    <div class="step-num">Step 1 of 3</div>
-    <div class="step-q">How many leads would you like to contact per month?</div>
-    <div class="step-hint">This is how many contacts you plan to download and reach out to each month.</div>
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="full" onclick="setMode('full')">Full Flow</button>
+    <button class="mode-tab" data-mode="credits" onclick="setMode('credits')">Credits Only</button>
+    <button class="mode-tab" data-mode="inboxes" onclick="setMode('inboxes')">Inboxes &amp; Domains</button>
+  </div>
+
+  <div class="progress-wrap" id="progress-wrap"></div>
+
+  <!-- ============ FULL FLOW ============ -->
+
+  <div class="screen active" id="full-0">
+    <div class="step-num">Step 1 of 8</div>
+    <div class="step-q">What's the average lifetime value of a client?</div>
+    <div class="step-hint">How much total revenue does one client generate over the entire relationship?<br><strong>Industry benchmark:</strong> Varies widely &mdash; $1,000&ndash;$50,000+ for B2B services</div>
+    <div class="big-input-wrap">
+      <div style="display:flex;align-items:baseline;justify-content:center"><span style="font-size:36px;color:var(--tx3);margin-right:4px;font-weight:500">$</span><input type="number" class="big-input" id="ltv-input" value="5000" min="1" style="width:auto;min-width:140px" oninput="S.ltv=Math.max(1,parseInt(this.value)||1)"></div>
+      <div class="big-input-label">revenue per client</div>
+    </div>
+    <button class="continue-btn" onclick="goFull(1)">Continue &rarr;</button>
+  </div>
+
+  <div class="screen" id="full-1">
+    <div class="step-num">Step 2 of 8</div>
+    <div class="step-q">How many new clients do you want to close per month?</div>
+    <div class="step-hint">Set your sales target &mdash; we'll reverse-engineer everything you need from here.</div>
+    <div class="big-input-wrap">
+      <input type="number" class="big-input" id="clients-goal" value="5" min="1" max="10000" oninput="updateFull()">
+      <div class="big-input-label">clients / month</div>
+    </div>
+    <button class="continue-btn" onclick="goFull(2)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goFull(0)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-2">
+    <div class="step-num">Step 3 of 8</div>
+    <div class="step-q">What's your close rate?</div>
+    <div class="step-hint">The % of sales calls that turn into paying clients. Example: if you close 2 out of 10 calls, your close rate is 20%<br><strong>Industry benchmark:</strong> 15&ndash;25% for B2B cold outreach</div>
+    <div class="rate-display">
+      <input type="number" class="rate-num" id="close-rate" value="20" min="1" max="100" step="1" oninput="syncSlider('close-rate',this.value); updateFull()">
+      <span class="rate-suffix">%</span>
+    </div>
+    <div class="slider-sub">Drag or type to adjust</div>
+    <input type="range" id="close-rate-slider" min="1" max="100" value="20" step="1" oninput="syncNum('close-rate',this.value); updateFull()">
+    <div class="slider-minmax"><span>1%</span><span>100%</span></div>
+    <div class="live-output" id="close-rate-out"></div>
+    <button class="continue-btn" onclick="goFull(3)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goFull(1)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-3">
+    <div class="step-num">Step 4 of 8</div>
+    <div class="step-q">What's your show rate?</div>
+    <div class="step-hint">The % of booked meetings where the prospect actually shows up. Example: 7 out of 10 booked meetings show up = 70%<br><strong>Industry benchmark:</strong> 60&ndash;80% with proper reminders</div>
+    <div class="rate-display">
+      <input type="number" class="rate-num" id="show-rate" value="70" min="1" max="100" step="1" oninput="syncSlider('show-rate',this.value); updateFull()">
+      <span class="rate-suffix">%</span>
+    </div>
+    <div class="slider-sub">Drag or type to adjust</div>
+    <input type="range" id="show-rate-slider" min="1" max="100" value="70" step="1" oninput="syncNum('show-rate',this.value); updateFull()">
+    <div class="slider-minmax"><span>1%</span><span>100%</span></div>
+    <div class="live-output" id="show-rate-out"></div>
+    <button class="continue-btn" onclick="goFull(4)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goFull(2)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-4">
+    <div class="step-num">Step 5 of 8</div>
+    <div class="step-q">What's your booking rate?</div>
+    <div class="step-hint">The % of positive replies that convert to a booked meeting. Example: 6 out of 10 interested prospects book a call = 60%<br><strong>Industry benchmark:</strong> 50&ndash;70% for warm leads</div>
+    <div class="rate-display">
+      <input type="number" class="rate-num" id="booking-rate" value="60" min="1" max="100" step="1" oninput="syncSlider('booking-rate',this.value); updateFull()">
+      <span class="rate-suffix">%</span>
+    </div>
+    <div class="slider-sub">Drag or type to adjust</div>
+    <input type="range" id="booking-rate-slider" min="1" max="100" value="60" step="1" oninput="syncNum('booking-rate',this.value); updateFull()">
+    <div class="slider-minmax"><span>1%</span><span>100%</span></div>
+    <div class="live-output" id="booking-rate-out"></div>
+    <button class="continue-btn" onclick="goFull(5)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goFull(3)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-5">
+    <div class="step-num">Step 6 of 8</div>
+    <div class="step-q">What's your positive reply rate?</div>
+    <div class="step-hint">The % of total replies that show genuine interest. Example: 1 out of 20 people who reply are actually interested = 5%<br><strong>Industry benchmark:</strong> 3&ndash;10% of leads contacted show interest</div>
+    <div class="rate-display">
+      <input type="number" class="rate-num" id="positive-reply-rate" value="5" min="1" max="100" step="1" oninput="syncSlider('positive-reply-rate',this.value); updateFull()">
+      <span class="rate-suffix">%</span>
+    </div>
+    <div class="slider-sub">Drag or type to adjust</div>
+    <input type="range" id="positive-reply-rate-slider" min="1" max="100" value="5" step="1" oninput="syncNum('positive-reply-rate',this.value); updateFull()">
+    <div class="slider-minmax"><span>1%</span><span>100%</span></div>
+    <div class="live-output" id="positive-reply-rate-out"></div>
+    <button class="continue-btn" onclick="goFull(6)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goFull(4)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-6">
+    <div class="step-num">Step 7 of 8</div>
+    <div class="step-q">What's your overall reply rate?</div>
+    <div class="step-hint">The % of leads contacted that reply to your outreach at all.<br><strong>Industry benchmark:</strong> 1&ndash;3% for cold email outreach</div>
+    <div class="rate-display">
+      <input type="number" class="rate-num" id="reply-rate" value="3" min="0.1" max="100" step="0.1" oninput="syncSlider('reply-rate',this.value); updateFull()">
+      <span class="rate-suffix">%</span>
+    </div>
+    <div class="slider-sub">Drag or type to adjust</div>
+    <input type="range" id="reply-rate-slider" min="0.1" max="100" value="3" step="0.1" oninput="syncNum('reply-rate',this.value); updateFull()">
+    <div class="slider-minmax"><span>0.1%</span><span>100%</span></div>
+    <div class="live-output" id="reply-rate-out"></div>
+    <button class="continue-btn" onclick="goFull(7)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goFull(5)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-7">
+    <div class="step-num">Step 8 of 8</div>
+    <div class="step-q">How many emails are in your sequence?</div>
+    <div class="step-hint">A 3-step sequence means you send 3 follow-up emails per lead<br><strong>Industry benchmark:</strong> 3&ndash;4 emails is the sweet spot for cold outreach</div>
+    <div class="options" id="seq-options">
+      <div class="opt" onclick="selectSeq(this,1)"><div class="radio"></div><div class="opt-body"><div class="opt-title">1 email</div><div class="opt-desc">Single touch</div></div></div>
+      <div class="opt" onclick="selectSeq(this,2)"><div class="radio"></div><div class="opt-body"><div class="opt-title">2 emails</div></div></div>
+      <div class="opt selected" onclick="selectSeq(this,3)"><div class="radio"></div><div class="opt-body"><div class="opt-title">3 emails <span class="rec-badge">Recommended</span></div></div></div>
+      <div class="opt" onclick="selectSeq(this,4)"><div class="radio"></div><div class="opt-body"><div class="opt-title">4 emails</div></div></div>
+      <div class="opt" onclick="selectSeq(this,5)"><div class="radio"></div><div class="opt-body"><div class="opt-title">5 emails</div></div></div>
+    </div>
+    <div class="live-output" id="seq-out"></div>
+    <button class="continue-btn" onclick="showFullResult()">See my results &rarr;</button>
+    <button class="back-btn" onclick="goFull(6)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="full-result">
+    <div id="full-result-content"></div>
+    <button class="restart" onclick="recalculate()">&larr; Adjust inputs</button>
+  </div>
+
+  <!-- ============ CREDITS ONLY ============ -->
+
+  <div class="screen" id="credits-1">
+    <div class="step-num">Step 1 of 2</div>
+    <div class="step-q">How many leads do you want to export per month?</div>
+    <div class="step-hint">The number of contacts you plan to download from ListKit each month.</div>
     <div class="slider-section">
-      <div class="slider-big-val" id="leads-display">1,000 <span>leads / month</span></div>
+      <div class="slider-big-val" id="cr-leads-display">1,000 <span>leads / month</span></div>
       <div class="slider-sub">Drag to adjust</div>
-      <div class="slider-outer">
-        <input type="range" id="leads-slider" min="100" max="50000" step="100" value="1000" oninput="onSlider(this.value)">
-      </div>
+      <input type="range" id="cr-leads-slider" min="100" max="50000" step="100" value="1000" oninput="onCrSlider(this.value)">
       <div class="slider-minmax"><span>100</span><span>50,000</span></div>
       <div class="quick-btns">
-        <button class="qb" onclick="setLeads(500)">500</button>
-        <button class="qb active" onclick="setLeads(1000)">1,000</button>
-        <button class="qb" onclick="setLeads(2500)">2,500</button>
-        <button class="qb" onclick="setLeads(5000)">5,000</button>
-        <button class="qb" onclick="setLeads(10000)">10,000</button>
-        <button class="qb" onclick="setLeads(25000)">25,000</button>
-        <button class="qb" onclick="setLeads(50000)">50,000</button>
+        <button class="qb" onclick="setCrLeads(500)">500</button>
+        <button class="qb active" onclick="setCrLeads(1000)">1,000</button>
+        <button class="qb" onclick="setCrLeads(2500)">2,500</button>
+        <button class="qb" onclick="setCrLeads(5000)">5,000</button>
+        <button class="qb" onclick="setCrLeads(10000)">10,000</button>
+        <button class="qb" onclick="setCrLeads(25000)">25,000</button>
+        <button class="qb" onclick="setCrLeads(50000)">50,000</button>
       </div>
     </div>
-    <button class="continue-btn" onclick="goTo(2)">Continue &rarr;</button>
+    <button class="continue-btn" onclick="goCredits(2)">Continue &rarr;</button>
   </div>
 
-  <!-- STEP 2 -->
-  <div class="screen" id="s2">
-    <div class="step-num">Step 2 of 3</div>
+  <div class="screen" id="credits-2">
+    <div class="step-num">Step 2 of 2</div>
     <div class="step-q">What contact info do you need?</div>
     <div class="step-hint">Select everything that applies. You can mix and match.</div>
-    <div class="options">
-      <div class="opt" onclick="toggleCheck(this,'email')" data-val="email">
+    <div class="options" id="cr-contact-opts">
+      <div class="opt" onclick="toggleCrContact(this,'email')" data-val="email">
         <div class="checkbox"></div>
-        <div class="opt-body"><div class="opt-title">Email address <span class="rec-badge" style="background:#FCEBEB;color:#A32D2D">Not recommended</span></div><div class="opt-desc">Standard email, not verified &mdash; lower deliverability</div></div>
-        <span class="opt-cost">1 credit / lead</span>
+        <div class="opt-body"><div class="opt-title">Email address <span class="rec-badge" style="background:var(--red-bg);color:var(--red)">Not recommended</span></div><div class="opt-desc">Standard email, not verified &mdash; lower deliverability</div></div>
+        <span class="opt-cost">1 cr / lead</span>
       </div>
-      <div class="opt selected" onclick="toggleCheck(this,'verified')" data-val="verified">
+      <div class="opt selected" onclick="toggleCrContact(this,'verified')" data-val="verified">
         <div class="checkbox"></div>
         <div class="opt-body"><div class="opt-title">Verified email <span class="rec-badge">Recommended</span></div><div class="opt-desc">Higher deliverability, catches bad emails</div></div>
-        <span class="opt-cost">2 credits / lead</span>
+        <span class="opt-cost">2 cr / lead</span>
       </div>
-      <div class="opt" onclick="toggleCheck(this,'phone')" data-val="phone">
+      <div class="opt" onclick="toggleCrContact(this,'phone')" data-val="phone">
         <div class="checkbox"></div>
         <div class="opt-body"><div class="opt-title">Phone number</div><div class="opt-desc">For cold calling or SMS outreach</div></div>
-        <span class="opt-cost">5 credits / lead</span>
+        <span class="opt-cost">5 cr / lead</span>
       </div>
-      <div class="opt" onclick="toggleCheck(this,'linkedin')" data-val="linkedin">
+      <div class="opt" onclick="toggleCrContact(this,'linkedin')" data-val="linkedin">
         <div class="checkbox"></div>
         <div class="opt-body"><div class="opt-title">LinkedIn URL</div><div class="opt-desc">Profile URL for LinkedIn outreach</div></div>
-        <span class="opt-cost">1 credit / lead</span>
+        <span class="opt-cost">1 cr / lead</span>
       </div>
     </div>
-    <button class="continue-btn" onclick="goTo(3)">Continue &rarr;</button>
-    <button class="back-btn" onclick="goTo(1)">&larr; Back</button>
+    <button class="continue-btn" onclick="showCreditsResult()">Calculate my credits &rarr;</button>
+    <button class="back-btn" onclick="goCredits(1)">&larr; Back</button>
   </div>
 
-  <!-- STEP 3 -->
-  <div class="screen" id="s3">
+  <div class="screen" id="credits-result">
+    <div id="credits-result-content"></div>
+    <button class="restart" onclick="recalculate()">&larr; Adjust inputs</button>
+  </div>
+
+  <!-- ============ INBOXES & DOMAINS ============ -->
+
+  <div class="screen" id="inboxes-1">
+    <div class="step-num">Step 1 of 3</div>
+    <div class="step-q">How many emails do you plan to send per month?</div>
+    <div class="step-hint">Total number of individual emails you want to send each month across all campaigns.</div>
+    <div class="big-input-wrap">
+      <input type="number" class="big-input" id="ib-emails" value="10000" min="1" oninput="updateIbQb()">
+      <div class="big-input-label">emails / month</div>
+    </div>
+    <div class="quick-btns" style="justify-content:center; margin-bottom:1.5rem">
+      <button class="qb" onclick="setIbEmails(5000)">5,000</button>
+      <button class="qb active" onclick="setIbEmails(10000)">10,000</button>
+      <button class="qb" onclick="setIbEmails(25000)">25,000</button>
+      <button class="qb" onclick="setIbEmails(50000)">50,000</button>
+      <button class="qb" onclick="setIbEmails(100000)">100,000</button>
+    </div>
+    <button class="continue-btn" onclick="goInboxes(2)">Continue &rarr;</button>
+  </div>
+
+  <div class="screen" id="inboxes-2">
+    <div class="step-num">Step 2 of 3</div>
+    <div class="step-q">How many emails per inbox per day?</div>
+    <div class="step-hint">Standard recommendation is 20 emails per inbox per day for warm inboxes.</div>
+    <div class="big-input-wrap">
+      <input type="number" class="big-input" id="ib-per-inbox" value="20" min="1" max="200">
+      <div class="big-input-label">emails / inbox / day</div>
+    </div>
+    <button class="continue-btn" onclick="goInboxes(3)">Continue &rarr;</button>
+    <button class="back-btn" onclick="goInboxes(1)">&larr; Back</button>
+  </div>
+
+  <div class="screen" id="inboxes-3">
     <div class="step-num">Step 3 of 3</div>
-    <div class="step-q">Will you send emails through ListKit's email engine?</div>
-    <div class="step-hint">Email engine costs 0.1 credits per email sent &mdash; separate from downloading leads.</div>
-    <div class="options" id="engine-opts">
-      <div class="opt" onclick="selectEngine(true)" id="opt-yes">
-        <div class="radio"></div>
-        <div class="opt-body"><div class="opt-title">Yes, I'll send through ListKit</div><div class="opt-desc">0.1 credits per email sent</div></div>
-      </div>
-      <div class="opt" onclick="selectEngine(false)" id="opt-no">
-        <div class="radio"></div>
-        <div class="opt-body"><div class="opt-title">No, I'll use another tool</div><div class="opt-desc">No additional sending credits needed</div></div>
-      </div>
+    <div class="step-q">How many sending days per month?</div>
+    <div class="step-hint">Most businesses send on weekdays only &mdash; that's about 20 days per month.</div>
+    <div class="big-input-wrap">
+      <input type="number" class="big-input" id="ib-days" value="20" min="1" max="31">
+      <div class="big-input-label">sending days / month</div>
     </div>
-    <div id="seq-section" style="display:none">
-      <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px">How many emails in your sequence?</div>
-      <div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:12px">A 3-step sequence = 3 emails sent per lead</div>
-      <div class="options" id="seq-opts">
-        <div class="opt" onclick="selectSeq(this,1)"><div class="radio"></div><div class="opt-body"><div class="opt-title">1 email</div><div class="opt-desc">Single touch</div></div><span class="opt-cost" id="sc1"></span></div>
-        <div class="opt" onclick="selectSeq(this,2)"><div class="radio"></div><div class="opt-body"><div class="opt-title">2 emails</div></div><span class="opt-cost" id="sc2"></span></div>
-        <div class="opt selected" onclick="selectSeq(this,3)"><div class="radio"></div><div class="opt-body"><div class="opt-title">3 emails <span class="rec-badge">Recommended</span></div></div><span class="opt-cost" id="sc3"></span></div>
-        <div class="opt" onclick="selectSeq(this,4)"><div class="radio"></div><div class="opt-body"><div class="opt-title">4 emails</div></div><span class="opt-cost" id="sc4"></span></div>
-        <div class="opt" onclick="selectSeq(this,5)"><div class="radio"></div><div class="opt-body"><div class="opt-title">5 emails</div></div><span class="opt-cost" id="sc5"></span></div>
-      </div>
-    </div>
-    <button class="continue-btn" id="s3-continue" onclick="showResult()" style="margin-top:8px">Calculate my credits &rarr;</button>
-    <button class="back-btn" onclick="goTo(2)">&larr; Back</button>
+    <button class="continue-btn" onclick="showInboxesResult()">See my results &rarr;</button>
+    <button class="back-btn" onclick="goInboxes(2)">&larr; Back</button>
   </div>
 
-  <!-- RESULT -->
-  <div class="screen" id="s-result">
-    <div class="result-hero">
-      <div class="result-big" id="r-big">0 <span>credits / month</span></div>
-      <div class="result-sub" id="r-sub"></div>
-    </div>
-    <div class="breakdown" id="breakdown"></div>
-    <div class="plans" id="plans"></div>
-    <div class="tip" id="tip" style="display:none"></div>
-    <button class="restart" onclick="restart()">Start over</button>
+  <div class="screen" id="inboxes-result">
+    <div id="inboxes-result-content"></div>
+    <button class="restart" onclick="recalculate()">&larr; Adjust inputs</button>
   </div>
 </div>
 
 <script>
-const S = { leads: 1000, contact: ['verified'], engine: null, seq: 3, freq: 2 };
+const S = {
+  mode: 'full',
+  ltv: 5000, clients_goal: 5, close_rate: 20, show_rate: 70, booking_rate: 60,
+  positive_reply_rate: 5, reply_rate: 3, seq_steps: 3,
+  calls: 0, meetings: 0, pos_replies: 0, tot_replies: 0, emails: 0, leads: 0,
+  cr_leads: 1000, cr_contact: ['verified'],
+  ib_emails: 10000, ib_per_inbox: 20, ib_days: 20,
+  full_contact: ['verified'], full_per_inbox: 20, full_days: 20
+};
 const PLANS = [
-  { name: 'Professional', c: 2000, price: '$97/mo' },
-  { name: 'Scale', c: 10000, price: '$297/mo' },
-  { name: 'Ultimate', c: 50000, price: '$597/mo' }
+  { name: 'Professional', c: 2000, price: '$97/mo', raw: 97 },
+  { name: 'Scale', c: 10000, price: '$297/mo', raw: 297 },
+  { name: 'Ultimate', c: 50000, price: '$597/mo', raw: 597 }
 ];
+const CREDITS = { email: 1, verified: 2, phone: 5, linkedin: 1 };
+const FUNNEL_COLORS = ['#5B8DEF','#7F77DD','#9F7AEA','#D97706','#0D9488','#2563EB','#16A34A'];
 const fmt = n => Math.round(n).toLocaleString();
+const $ = id => document.getElementById(id);
 
-function onSlider(v) {
-  S.leads = parseInt(v);
-  document.getElementById('leads-display').innerHTML = fmt(S.leads) + ' <span>leads / month</span>';
-  document.querySelectorAll('.qb').forEach(b => {
-    const m = b.getAttribute('onclick').match(/\d+/);
-    if (m) b.classList.toggle('active', parseInt(m[0]) === S.leads);
-  });
-  updateSeqCosts();
-}
+function syncSlider(id, val) { $(id + '-slider').value = val; }
+function syncNum(id, val) { $(id).value = val; }
 
-function setLeads(v) {
-  S.leads = v;
-  document.getElementById('leads-slider').value = v;
-  document.getElementById('leads-display').innerHTML = fmt(v) + ' <span>leads / month</span>';
-  document.querySelectorAll('.qb').forEach(b => {
-    const m = b.getAttribute('onclick').match(/\d+/);
-    if (m) b.classList.toggle('active', parseInt(m[0]) === v);
-  });
-  updateSeqCosts();
-}
-
-function updateSeqCosts() {
-  const note = document.getElementById('seq-leads-note');
-  if (note) note.textContent = fmt(S.leads);
-  [1, 2, 3, 4, 5].forEach(n => {
-    const el = document.getElementById('sc' + n);
-    if (el) el.textContent = fmt(S.leads * n * 0.1) + ' credits';
-  });
-}
-
-function goTo(n) {
+function setMode(mode) {
+  S.mode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s' + n).classList.add('active');
-  [1, 2, 3].forEach(i => document.getElementById('p' + i).classList.toggle('done', i <= n));
-  document.getElementById('p-label').textContent = 'Step ' + n + ' of 3';
+  $(mode === 'full' ? 'full-0' : mode === 'credits' ? 'credits-1' : 'inboxes-1').classList.add('active');
+  updateProgress();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function toggleCheck(el, val) {
-  el.classList.toggle('selected');
-  if (el.classList.contains('selected')) {
-    if (!S.contact.includes(val)) S.contact.push(val);
-    if (val === 'verified') {
-      S.contact = S.contact.filter(v => v !== 'email');
-      document.querySelector('[data-val="email"]').classList.remove('selected');
-    }
-    if (val === 'email') {
-      S.contact = S.contact.filter(v => v !== 'verified');
-      document.querySelector('[data-val="verified"]').classList.remove('selected');
-    }
-  } else {
-    S.contact = S.contact.filter(v => v !== val);
+function updateProgress() {
+  const wrap = $('progress-wrap');
+  const total = S.mode === 'full' ? 8 : S.mode === 'credits' ? 2 : 3;
+  let cur = 1;
+  const active = document.querySelector('.screen.active');
+  if (active) {
+    const m = active.id.match(/(\d+)$/);
+    if (m) cur = parseInt(m[1]) + (S.mode === 'full' ? 1 : 0);
+    if (active.id.includes('result')) cur = total + 1;
   }
+  let h = '';
+  for (let i = 1; i <= total; i++) h += '<div class="progress-step ' + (i <= cur ? 'done' : '') + '"></div>';
+  h += '<span class="progress-label">' + (cur > total ? 'Done' : 'Step ' + cur + ' of ' + total) + '</span>';
+  wrap.innerHTML = h;
 }
 
-function selectEngine(yes) {
-  S.engine = yes;
-  document.getElementById('opt-yes').classList.toggle('selected', yes);
-  document.getElementById('opt-no').classList.toggle('selected', !yes);
-  document.getElementById('seq-section').style.display = yes ? 'block' : 'none';
-  updateSeqCosts();
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function goFull(n) { showScreen('full-' + n); }
+function goCredits(n) { showScreen('credits-' + n); }
+function goInboxes(n) { showScreen('inboxes-' + n); }
+
+function updateFull() {
+  S.clients_goal = Math.max(1, parseInt($('clients-goal').value) || 1);
+  S.close_rate = Math.max(1, parseFloat($('close-rate').value) || 1);
+  S.show_rate = Math.max(1, parseFloat($('show-rate').value) || 1);
+  S.booking_rate = Math.max(1, parseFloat($('booking-rate').value) || 1);
+  S.positive_reply_rate = Math.max(1, parseFloat($('positive-reply-rate').value) || 1);
+  S.reply_rate = Math.max(0.1, parseFloat($('reply-rate').value) || 0.1);
+
+  S.calls = Math.ceil(S.clients_goal / (S.close_rate / 100));
+  S.meetings = Math.ceil(S.calls / (S.show_rate / 100));
+  S.pos_replies = Math.ceil(S.meetings / (S.booking_rate / 100));
+  S.tot_replies = Math.ceil(S.pos_replies / (S.positive_reply_rate / 100));
+  S.leads = Math.ceil(S.tot_replies / (S.reply_rate / 100));
+  S.emails = S.leads * S.seq_steps;
+
+  const g = S.clients_goal, pl = g === 1 ? '' : 's';
+  const set = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+  set('close-rate-out', 'You need <strong>' + fmt(S.calls) + ' calls</strong> to close ' + fmt(g) + ' client' + pl);
+  set('show-rate-out', 'You need to book <strong>' + fmt(S.meetings) + ' meetings</strong> to get ' + fmt(S.calls) + ' calls');
+  set('booking-rate-out', 'You need <strong>' + fmt(S.pos_replies) + ' positive replies</strong> to book ' + fmt(S.meetings) + ' meetings');
+  set('positive-reply-rate-out', 'You need <strong>' + fmt(S.tot_replies) + ' total replies</strong> to get ' + fmt(S.pos_replies) + ' positive replies');
+  set('reply-rate-out', 'You need to reach out to <strong>' + fmt(S.leads) + ' leads</strong> to get ' + fmt(S.tot_replies) + ' replies');
+  set('seq-out', 'You\'ll send <strong>' + fmt(S.emails) + ' total emails</strong> across ' + fmt(S.leads) + ' leads');
 }
 
 function selectSeq(el, n) {
-  document.querySelectorAll('#seq-opts .opt').forEach(o => o.classList.remove('selected'));
+  document.querySelectorAll('#seq-options .opt').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
-  S.seq = n;
+  S.seq_steps = n;
+  updateFull();
 }
 
-function selectFreq(el, v) {
-  document.querySelectorAll('#freq-opts .opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  S.freq = v;
+/* ---- Full result ---- */
+function showFullResult() {
+  updateFull();
+  S.full_contact = ['verified'];
+  S.full_per_inbox = 20;
+  S.full_days = 20;
+  const g = S.clients_goal, pl = g === 1 ? '' : 's';
+
+  // Build funnel data (top = widest = most volume, bottom = narrowest = goal)
+  const funnelData = [
+    { num: S.emails, label: 'total emails to send', color: '#5B8DEF' },
+    { num: S.leads, label: 'leads to contact', color: '#7F77DD', highlight: true },
+    { num: S.tot_replies, label: 'total replies needed', color: '#9F7AEA', rate: S.reply_rate + '% reply rate' },
+    { num: S.pos_replies, label: 'positive replies needed', color: '#D97706', rate: S.positive_reply_rate + '% positive reply rate' },
+    { num: S.meetings, label: 'meetings to book', color: '#0D9488', rate: S.booking_rate + '% booking rate' },
+    { num: S.calls, label: 'calls needed', color: '#2563EB', rate: S.show_rate + '% show rate' },
+    { num: g, label: 'clients closed', color: '#16A34A', rate: S.close_rate + '% close rate' }
+  ];
+  const maxVal = Math.max(...funnelData.map(d => d.num));
+
+  let h = '';
+  // Card 1: Leads + Visual Funnel
+  h += '<div class="result-card accent-purple"><div class="result-card-title">Your Sales Funnel</div>';
+  h += '<div class="result-card-big">' + fmt(S.leads) + ' <span>leads needed / month</span></div>';
+  h += '<div class="result-card-sub">To close ' + fmt(g) + ' client' + pl + ' per month based on your conversion rates</div>';
+  h += '<div class="funnel">';
+  funnelData.forEach((d, i) => {
+    if (i > 0 && funnelData[i].rate) h += '<div class="funnel-connector">&darr; ' + d.rate + '</div>';
+    else if (i > 0) h += '<div class="funnel-connector">&darr; ' + S.seq_steps + '-step sequence</div>';
+    const w = Math.max(40, Math.round((d.num / maxVal) * 100));
+    h += '<div class="funnel-bar' + (d.highlight ? ' highlight' : '') + '" style="width:' + w + '%;background:' + d.color + '">';
+    h += '<span class="funnel-bar-num">' + fmt(d.num) + '</span>';
+    h += '<span class="funnel-bar-label">' + d.label + '</span></div>';
+  });
+  h += '</div></div>';
+
+  // Card 2: Credits
+  h += '<div class="result-card accent-blue"><div class="result-card-title">Credits Needed</div>';
+  h += '<div class="result-card-sub">Select what contact info you need for each lead:</div>';
+  h += contactOpts('full-contact-opts', 'toggleFullContact', S.full_contact);
+  h += '<div id="full-credits-result"></div></div>';
+
+  // Card 3: Inboxes
+  h += '<div class="result-card accent-teal"><div class="result-card-title">Inboxes Needed</div>';
+  h += '<div class="result-card-sub">Based on sending ' + fmt(S.emails) + ' emails per month</div>';
+  h += '<div class="edit-row"><span class="edit-label">Emails per inbox per day</span><input type="number" class="edit-input" id="full-per-inbox" value="20" min="1" max="200" oninput="updateFullCards()"></div>';
+  h += '<div class="edit-row"><span class="edit-label">Sending days per month</span><input type="number" class="edit-input" id="full-days" value="20" min="1" max="31" oninput="updateFullCards()"></div>';
+  h += '<div id="full-inboxes-result"></div></div>';
+
+  // Card 4: Domains
+  h += '<div class="result-card accent-amber"><div class="result-card-title">Domains Needed</div>';
+  h += '<div id="full-domains-result"></div>';
+  h += '<div class="tip" style="margin-top:12px;margin-bottom:0">Each domain should have max 3 inboxes for deliverability</div></div>';
+
+  // Card 5: ROI
+  h += '<div class="result-card accent-green"><div class="result-card-title">Projected ROI</div>';
+  h += '<div id="full-roi-result"></div></div>';
+
+  $('full-result-content').innerHTML = h;
+  updateFullCards();
+  showScreen('full-result');
 }
 
-function showResult() {
-  const hasEmail = S.contact.includes('email');
-  const hasVerified = S.contact.includes('verified');
-  const hasPhone = S.contact.includes('phone');
-  const hasLinkedin = S.contact.includes('linkedin');
-  const cEmail = hasEmail ? S.leads : 0;
-  const cVerified = hasVerified ? S.leads * 2 : 0;
-  const cPhone = hasPhone ? S.leads * 5 : 0;
-  const cLinkedin = hasLinkedin ? S.leads : 0;
-  const totalEmails = S.engine ? S.leads * S.seq : 0;
-  const cEngine = Math.round(totalEmails * 0.1);
-  const total = cEmail + cVerified + cPhone + cLinkedin + cEngine;
+function contactOpts(id, handler, selected) {
+  const items = [
+    { val: 'email', title: 'Email address', badge: '<span class="rec-badge" style="background:var(--red-bg);color:var(--red)">Not recommended</span>', cost: '1 cr/lead' },
+    { val: 'verified', title: 'Verified email', badge: '<span class="rec-badge">Recommended</span>', cost: '2 cr/lead' },
+    { val: 'phone', title: 'Phone number', badge: '', cost: '5 cr/lead' },
+    { val: 'linkedin', title: 'LinkedIn URL', badge: '', cost: '1 cr/lead' }
+  ];
+  let h = '<div class="options" id="' + id + '">';
+  items.forEach(it => {
+    const sel = selected.includes(it.val) ? ' selected' : '';
+    h += '<div class="opt' + sel + '" onclick="' + handler + '(this,\'' + it.val + '\')" data-val="' + it.val + '">';
+    h += '<div class="checkbox"></div><div class="opt-body"><div class="opt-title">' + it.title + ' ' + it.badge + '</div></div>';
+    h += '<span class="opt-cost">' + it.cost + '</span></div>';
+  });
+  h += '</div>';
+  return h;
+}
 
-  document.getElementById('r-big').innerHTML = fmt(total) + ' <span>credits / month</span>';
-  document.getElementById('r-sub').textContent = 'Based on ' + fmt(S.leads) + ' leads/month';
+function toggleFullContact(el, val) {
+  toggleContact(el, val, S, 'full_contact', 'full-contact-opts');
+  updateFullCards();
+}
 
-  const rows = [];
-  if (hasEmail) rows.push(['Email exports (' + fmt(S.leads) + ' leads)', '1 credit each', fmt(cEmail) + ' credits']);
-  if (hasVerified) rows.push(['Verified emails (' + fmt(S.leads) + ' leads)', '2 credits each', fmt(cVerified) + ' credits']);
-  if (hasPhone) rows.push(['Phone numbers (' + fmt(S.leads) + ' leads)', '5 credits each', fmt(cPhone) + ' credits']);
-  if (hasLinkedin) rows.push(['LinkedIn URLs (' + fmt(S.leads) + ' leads)', '1 credit each', fmt(cLinkedin) + ' credits']);
-  if (S.engine) rows.push(['Email engine (' + fmt(totalEmails) + ' emails sent)', '0.1 credits each', fmt(cEngine) + ' credits']);
-  rows.push(['Total credits needed / month', '', fmt(total) + ' credits']);
+function toggleContact(el, val, state, key, containerId) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    if (!state[key].includes(val)) state[key].push(val);
+    if (val === 'verified') { state[key] = state[key].filter(v => v !== 'email'); const e = document.querySelector('#'+containerId+' [data-val="email"]'); if (e) e.classList.remove('selected'); }
+    if (val === 'email') { state[key] = state[key].filter(v => v !== 'verified'); const e = document.querySelector('#'+containerId+' [data-val="verified"]'); if (e) e.classList.remove('selected'); }
+  } else { state[key] = state[key].filter(v => v !== val); }
+}
 
-  document.getElementById('breakdown').innerHTML = rows.map((r, i) =>
-    `<div class="brow ${i === rows.length - 1 ? 'last' : ''}">
-      <span class="brow-label">${r[0]}${r[1] ? ` <span style="font-size:11px;color:var(--color-text-tertiary)">(${r[1]})</span>` : ''}</span>
-      <span class="brow-val">${r[2]}</span>
-    </div>`).join('');
+function updateFullCards() {
+  const perLead = S.full_contact.reduce((s, t) => s + (CREDITS[t] || 0), 0);
+  const contactCr = S.leads * perLead;
+  const engineCr = Math.ceil(S.emails * 0.1);
+  const totalCr = contactCr + engineCr;
+  let ch = '<div class="result-card-big" style="margin-top:12px">' + fmt(totalCr) + ' <span>credits / month</span></div>';
+  ch += '<div style="font-size:13px;color:var(--tx2);margin-bottom:16px;line-height:1.8">';
+  ch += 'Contact info: ' + fmt(S.leads) + ' leads &times; ' + perLead + ' cr = <strong>' + fmt(contactCr) + '</strong> credits<br>';
+  ch += 'Email engine: ' + fmt(S.emails) + ' emails &times; 0.1 cr = <strong>' + fmt(engineCr) + '</strong> credits</div>';
+  ch += renderPlans(totalCr);
+  if (!S.full_contact.includes('verified') && S.full_contact.includes('email'))
+    ch += '<div class="tip" style="margin-top:16px">Consider switching to verified emails &mdash; they significantly improve deliverability and are worth the extra credit.</div>';
+  $('full-credits-result').innerHTML = ch;
 
+  S.full_per_inbox = Math.max(1, parseInt($('full-per-inbox').value) || 20);
+  S.full_days = Math.max(1, parseInt($('full-days').value) || 20);
+  const inboxes = Math.ceil(S.emails / (S.full_per_inbox * S.full_days));
+  let ih = '<div class="result-card-big" style="margin-top:12px">' + fmt(inboxes) + ' <span>inboxes</span></div>';
+  ih += '<div class="result-card-sub">' + fmt(S.emails) + ' emails &divide; (' + S.full_per_inbox + ' &times; ' + S.full_days + ') = ' + fmt(inboxes) + ' inboxes</div>';
+  $('full-inboxes-result').innerHTML = ih;
+
+  const domains = Math.ceil(inboxes / 3);
+  $('full-domains-result').innerHTML = '<div class="result-card-big">' + fmt(domains) + ' <span>domains</span></div><div class="result-card-sub">' + fmt(inboxes) + ' inboxes &divide; 3 = ' + fmt(domains) + ' domains</div>';
+
+  const monthlyRevenue = S.clients_goal * S.ltv;
+  const bestPlan = PLANS.find(p => p.c >= totalCr);
+  const cost = bestPlan ? bestPlan.raw : PLANS[PLANS.length - 1].raw;
+  const planName = bestPlan ? bestPlan.name : PLANS[PLANS.length - 1].name;
+  const planPrice = bestPlan ? bestPlan.price : PLANS[PLANS.length - 1].price;
+  const roi = cost > 0 ? Math.round((monthlyRevenue / cost) * 100) / 100 : 0;
+  let rh = '<div class="result-card-big" style="color:var(--green)">' + fmt(roi) + 'x <span>return on investment</span></div>';
+  rh += '<div style="font-size:14px;color:var(--tx2);margin-top:10px;margin-bottom:16px;line-height:1.8">';
+  rh += 'Projected revenue: <strong style="color:var(--green)">$' + fmt(monthlyRevenue) + '/mo</strong> (' + fmt(S.clients_goal) + ' clients &times; $' + fmt(S.ltv) + ' LTV)<br>';
+  rh += 'ListKit cost: <strong>'+planPrice+'</strong> ('+planName+')</div>';
+  rh += '<div class="tip tip-green" style="margin-bottom:0">For every <strong>$1</strong> you spend on ListKit, you could generate <strong>$' + fmt(roi) + '</strong> in revenue.</div>';
+  $('full-roi-result').innerHTML = rh;
+}
+
+function renderPlans(total) {
   let best = null;
-  document.getElementById('plans').innerHTML = PLANS.map(p => {
+  let h = '<div class="plans">';
+  PLANS.forEach(p => {
     const ok = p.c >= total;
     if (ok && !best) best = p.name;
     const isBest = p.name === best;
-    return `<div class="plan ${isBest ? 'best' : ''}">
-      ${isBest ? '<div class="plan-badge">Best fit</div>' : ''}
-      <div class="plan-name">${p.name}</div>
-      <div class="plan-creds">${fmt(p.c)} <span>credits</span></div>
-      <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:2px">${p.price}</div>
-      <div class="plan-status ${ok ? 'ok' : 'short'}">${ok ? 'Covers you' : fmt(total - p.c) + ' short'}</div>
-    </div>`;
-  }).join('');
-
-  let tip = '';
-  if (!hasVerified && hasEmail) tip = 'Consider switching to verified emails \u2014 they significantly improve deliverability and are worth the extra credit.';
-  const tipEl = document.getElementById('tip');
-  if (tip) { tipEl.textContent = tip; tipEl.style.display = 'block'; } else { tipEl.style.display = 'none'; }
-
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-result').classList.add('active');
-  [1, 2, 3].forEach(i => document.getElementById('p' + i).classList.add('done'));
-  document.getElementById('p-label').textContent = 'Done';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function restart() {
-  S.leads = 1000; S.contact = ['verified']; S.engine = null; S.seq = 3; S.freq = 2;
-  document.getElementById('leads-slider').value = 1000;
-  document.getElementById('leads-display').innerHTML = '1,000 <span>leads / month</span>';
-  document.querySelectorAll('.qb').forEach(b => {
-    const m = b.getAttribute('onclick').match(/\d+/);
-    if (m) b.classList.toggle('active', parseInt(m[0]) === 1000);
+    h += '<div class="plan ' + (isBest ? 'best' : '') + '">';
+    if (isBest) h += '<div class="plan-badge">Best fit</div>';
+    h += '<div class="plan-name">' + p.name + '</div>';
+    h += '<div class="plan-creds">' + fmt(p.c) + ' <span>credits</span></div>';
+    h += '<div class="plan-price">' + p.price + '</div>';
+    h += '<div class="plan-status ' + (ok ? 'ok' : 'short') + '">' + (ok ? 'Covers you' : fmt(total - p.c) + ' short') + '</div>';
+    h += '</div>';
   });
-  document.querySelectorAll('[data-val]').forEach(el => el.classList.toggle('selected', el.dataset.val === 'verified'));
-  document.getElementById('opt-yes').classList.remove('selected');
-  document.getElementById('opt-no').classList.remove('selected');
-  document.getElementById('seq-section').style.display = 'none';
-  goTo(1);
+  h += '</div>';
+  return h;
 }
 
-updateSeqCosts();
+/* ---- Credits mode ---- */
+function onCrSlider(v) {
+  S.cr_leads = parseInt(v);
+  $('cr-leads-display').innerHTML = fmt(S.cr_leads) + ' <span>leads / month</span>';
+  document.querySelectorAll('#credits-1 .qb').forEach(b => { const m = b.getAttribute('onclick').match(/\d+/); if (m) b.classList.toggle('active', parseInt(m[0]) === S.cr_leads); });
+}
+function setCrLeads(v) {
+  S.cr_leads = v; $('cr-leads-slider').value = v;
+  $('cr-leads-display').innerHTML = fmt(v) + ' <span>leads / month</span>';
+  document.querySelectorAll('#credits-1 .qb').forEach(b => { const m = b.getAttribute('onclick').match(/\d+/); if (m) b.classList.toggle('active', parseInt(m[0]) === v); });
+}
+function toggleCrContact(el, val) { toggleContact(el, val, S, 'cr_contact', 'cr-contact-opts'); }
+
+function showCreditsResult() {
+  const perLead = S.cr_contact.reduce((s, t) => s + (CREDITS[t] || 0), 0);
+  const total = S.cr_leads * perLead;
+  const nameMap = { email: 'Email', verified: 'Verified email', phone: 'Phone number', linkedin: 'LinkedIn URL' };
+  let h = '<div class="result-card accent-blue"><div class="result-card-title">Credits Needed</div>';
+  h += '<div class="result-card-big">' + fmt(total) + ' <span>credits / month</span></div>';
+  h += '<div class="result-card-sub">' + fmt(S.cr_leads) + ' leads &times; ' + perLead + ' credits per lead</div>';
+  h += '<div style="margin-bottom:16px">';
+  S.cr_contact.forEach(t => { h += '<div class="edit-row"><span class="edit-label">' + nameMap[t] + ' (' + CREDITS[t] + ' cr/lead)</span><span style="font-weight:600;color:var(--purple)">' + fmt(S.cr_leads * CREDITS[t]) + ' credits</span></div>'; });
+  h += '</div>';
+  h += renderPlans(total);
+  if (!S.cr_contact.includes('verified') && S.cr_contact.includes('email'))
+    h += '<div class="tip" style="margin-top:16px">Consider switching to verified emails &mdash; they significantly improve deliverability and are worth the extra credit.</div>';
+  h += '</div>';
+  $('credits-result-content').innerHTML = h;
+  showScreen('credits-result');
+}
+
+/* ---- Inboxes mode ---- */
+function updateIbQb() {
+  S.ib_emails = Math.max(1, parseInt($('ib-emails').value) || 1);
+  document.querySelectorAll('#inboxes-1 .qb').forEach(b => { const m = b.getAttribute('onclick').match(/\d+/); if (m) b.classList.toggle('active', parseInt(m[0]) === S.ib_emails); });
+}
+function setIbEmails(v) { S.ib_emails = v; $('ib-emails').value = v; updateIbQb(); }
+
+function showInboxesResult() {
+  S.ib_per_inbox = Math.max(1, parseInt($('ib-per-inbox').value) || 20);
+  S.ib_days = Math.max(1, parseInt($('ib-days').value) || 20);
+  const inboxes = Math.ceil(S.ib_emails / (S.ib_per_inbox * S.ib_days));
+  const domains = Math.ceil(inboxes / 3);
+  let h = '<div class="result-card accent-teal"><div class="result-card-title">Inboxes Needed</div>';
+  h += '<div class="result-card-big">' + fmt(inboxes) + ' <span>inboxes</span></div>';
+  h += '<div class="result-card-sub">' + fmt(S.ib_emails) + ' emails &divide; (' + S.ib_per_inbox + ' &times; ' + S.ib_days + ') = ' + fmt(inboxes) + ' inboxes</div></div>';
+  h += '<div class="result-card accent-amber"><div class="result-card-title">Domains Needed</div>';
+  h += '<div class="result-card-big">' + fmt(domains) + ' <span>domains</span></div>';
+  h += '<div class="result-card-sub">' + fmt(inboxes) + ' inboxes &divide; 3 = ' + fmt(domains) + ' domains</div>';
+  h += '<div class="tip" style="margin-top:12px;margin-bottom:0">Each domain should have max 3 inboxes for deliverability</div></div>';
+  $('inboxes-result-content').innerHTML = h;
+  showScreen('inboxes-result');
+}
+
+function recalculate() {
+  if (S.mode === 'full') goFull(0);
+  else if (S.mode === 'credits') goCredits(1);
+  else goInboxes(1);
+}
+
+updateFull();
+updateProgress();
 </script>
 </body>
 </html>
