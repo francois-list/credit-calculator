@@ -130,6 +130,7 @@ input[type=range] { width: 100%; accent-color: var(--purple); cursor: pointer; d
 .edit-label { font-size: 14px; color: var(--tx2); font-weight: 500 }
 .edit-input { width: 72px; padding: 8px 10px; font-size: 15px; font-weight: 600; border: 2px solid var(--bd3); border-radius: 8px; text-align: center; font-family: var(--font); color: var(--tx1); transition: border-color 0.2s }
 .edit-input:focus { outline: none; border-color: var(--purple) }
+select.edit-input { appearance: auto; -webkit-appearance: auto; cursor: pointer }
 
 .tip { background: var(--blue-bg); border-radius: var(--r-md); padding: 14px 18px; font-size: 13px; color: var(--blue); line-height: 1.6; margin-bottom: 16px; font-weight: 500; border-left: 4px solid var(--blue) }
 .tip.tip-green { background: var(--green-bg); color: var(--green-dk); border-left-color: var(--green) }
@@ -400,27 +401,38 @@ input[type=range] { width: 100%; accent-color: var(--purple); cursor: pointer; d
   </div>
 
   <div class="screen" id="inboxes-2">
-    <div class="step-num">Step 2 of 3</div>
-    <div class="step-q">How many emails per inbox per day?</div>
-    <div class="step-hint">Standard recommendation is 20 emails per inbox per day for warm inboxes.</div>
-    <div class="big-input-wrap">
-      <input type="number" class="big-input" id="ib-per-inbox" value="20" min="1" max="200">
-      <div class="big-input-label">emails / inbox / day</div>
-    </div>
-    <button class="continue-btn" onclick="goInboxes(3)">Continue &rarr;</button>
-    <button class="back-btn" onclick="goInboxes(1)">&larr; Back</button>
-  </div>
+    <div class="step-num">Step 2 of 2</div>
+    <div class="step-q">Configure your email infrastructure</div>
+    <div class="step-hint">Select your email providers, sending volume tier, and schedule.</div>
 
-  <div class="screen" id="inboxes-3">
-    <div class="step-num">Step 3 of 3</div>
-    <div class="step-q">How many sending days per month?</div>
-    <div class="step-hint">Most businesses send on weekdays only &mdash; that's about 20 days per month.</div>
-    <div class="big-input-wrap">
-      <input type="number" class="big-input" id="ib-days" value="20" min="1" max="31">
-      <div class="big-input-label">sending days / month</div>
+    <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:8px;margin-top:8px">Email Providers</div>
+    <div class="options" id="sm-provider-opts">
+      <div class="opt selected" onclick="toggleSmProvider(this,'google')"><div class="checkbox"></div><div class="opt-body"><div class="opt-title">Google</div><div class="opt-desc">2 mailboxes/domain &bull; $3.50/mailbox</div></div></div>
+      <div class="opt" onclick="toggleSmProvider(this,'outlook')"><div class="checkbox"></div><div class="opt-body"><div class="opt-title">Outlook</div><div class="opt-desc">25 mailboxes/domain &bull; $50/domain</div></div></div>
+      <div class="opt" onclick="toggleSmProvider(this,'smtp')"><div class="checkbox"></div><div class="opt-body"><div class="opt-title">SMTP</div><div class="opt-desc">4 mailboxes/domain &bull; $3.75/domain</div></div></div>
     </div>
+
+    <div id="sm-distribution-section" style="display:none">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:8px;margin-top:20px">Volume Distribution</div>
+      <div id="sm-distribution-inputs"></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:8px;margin-top:20px">Sending Tier</div>
+    <div class="options" id="sm-tier-opts">
+      <div class="opt" onclick="selectSmTier(this,'low')"><div class="radio"></div><div class="opt-body"><div class="opt-title">Low</div><div class="opt-desc">Conservative &mdash; best for new domains</div></div></div>
+      <div class="opt" onclick="selectSmTier(this,'medium')"><div class="radio"></div><div class="opt-body"><div class="opt-title">Medium</div><div class="opt-desc">Balanced volume and deliverability</div></div></div>
+      <div class="opt selected" onclick="selectSmTier(this,'max')"><div class="radio"></div><div class="opt-body"><div class="opt-title">Max <span class="rec-badge">Recommended</span></div><div class="opt-desc">Maximum throughput for warmed inboxes</div></div></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:8px;margin-top:20px">Sending Schedule</div>
+    <div class="options" id="sm-schedule-opts">
+      <div class="opt selected" onclick="selectSmSchedule(this,'weekdays')"><div class="radio"></div><div class="opt-body"><div class="opt-title">Weekdays only</div><div class="opt-desc">22 sending days per month</div></div></div>
+      <div class="opt" onclick="selectSmSchedule(this,'everyday')"><div class="radio"></div><div class="opt-body"><div class="opt-title">Every day</div><div class="opt-desc">30 sending days per month</div></div></div>
+    </div>
+
+    <div class="live-output" id="sm-preview-out"></div>
     <button class="continue-btn" onclick="showInboxesResult()">See my results &rarr;</button>
-    <button class="back-btn" onclick="goInboxes(2)">&larr; Back</button>
+    <button class="back-btn" onclick="goInboxes(1)">&larr; Back</button>
   </div>
 
   <div class="screen" id="inboxes-result">
@@ -436,14 +448,29 @@ const S = {
   positive_reply_rate: 5, reply_rate: 1, seq_steps: 3,
   calls: 0, meetings: 0, pos_replies: 0, tot_replies: 0, emails: 0, leads: 0,
   cr_leads: 1000, cr_contact: ['verified'], cr_use_engine: true, cr_seq_steps: 3,
-  ib_emails: 10000, ib_per_inbox: 20, ib_days: 20,
-  full_contact: ['verified'], full_per_inbox: 20, full_days: 20
+  ib_emails: 10000,
+  full_contact: ['verified'],
+  sm_providers: ['google'], sm_tier: 'max', sm_schedule: 'weekdays',
+  sm_distribution: { google: 100, outlook: 0, smtp: 0 }
 };
 const PLANS = [
   { name: 'Professional', c: 2000, price: '$97/mo', raw: 97, addon: 50 },
   { name: 'Scale', c: 10000, price: '$297/mo', raw: 297, addon: 30 },
   { name: 'Ultimate', c: 50000, price: '$597/mo', raw: 597, addon: 10 }
 ];
+const SCALEDMAIL = {
+  providers: {
+    google:  { label: 'Google',  mbxPerDomain: 2,  pricePerDomain: 7.00, color: '#4285F4' },
+    outlook: { label: 'Outlook', mbxPerDomain: 25, pricePerDomain: 50,   color: '#0078D4' },
+    smtp:    { label: 'SMTP',    mbxPerDomain: 4,  pricePerDomain: 3.75, color: '#6B7280' }
+  },
+  tiers: {
+    low:    { google: 15, outlook: 5,  smtp: 7  },
+    medium: { google: 20, outlook: 8,  smtp: 8  },
+    max:    { google: 25, outlook: 10, smtp: 10 }
+  },
+  schedules: { weekdays: 22, everyday: 30 }
+};
 function getBestPlan(total) {
   let best = null;
   PLANS.forEach(p => {
@@ -457,6 +484,30 @@ function getBestPlan(total) {
   });
   return best;
 }
+function calcScaledmail(totalEmails) {
+  const daysPerMonth = SCALEDMAIL.schedules[S.sm_schedule];
+  const tier = SCALEDMAIL.tiers[S.sm_tier];
+  const dist = S.sm_distribution;
+  const results = {};
+  let totalMailboxes = 0, totalDomains = 0, totalCost = 0;
+  S.sm_providers.forEach(prov => {
+    const cfg = SCALEDMAIL.providers[prov];
+    const pct = dist[prov] / 100;
+    const provEmails = Math.ceil(totalEmails * pct);
+    const emailsPerMbxPerDay = tier[prov];
+    const emailsPerDomainPerDay = cfg.mbxPerDomain * emailsPerMbxPerDay;
+    const dailyVolume = Math.ceil(provEmails / daysPerMonth);
+    const domains = dailyVolume > 0 ? Math.ceil(dailyVolume / emailsPerDomainPerDay) : 0;
+    const mailboxes = domains * cfg.mbxPerDomain;
+    const cost = domains * cfg.pricePerDomain;
+    results[prov] = { domains, mailboxes, cost, emails: provEmails, dailyVolume, emailsPerMbxPerDay, emailsPerDomainPerDay };
+    totalMailboxes += mailboxes;
+    totalDomains += domains;
+    totalCost += cost;
+  });
+  return { providers: results, totalMailboxes, totalDomains, totalCost, daysPerMonth, tierName: S.sm_tier };
+}
+
 const CREDITS = { email: 1, verified: 2, phone: 5, linkedin: 1 };
 const FUNNEL_COLORS = ['#5B8DEF','#7F77DD','#9F7AEA','#D97706','#0D9488','#2563EB','#16A34A'];
 const fmt = n => Math.round(n).toLocaleString();
@@ -476,7 +527,7 @@ function setMode(mode) {
 
 function updateProgress() {
   const wrap = $('progress-wrap');
-  const total = S.mode === 'full' ? 8 : S.mode === 'credits' ? 3 : 3;
+  const total = S.mode === 'full' ? 8 : S.mode === 'credits' ? 3 : 2;
   let cur = 1;
   const active = document.querySelector('.screen.active');
   if (active) {
@@ -498,7 +549,7 @@ function showScreen(id) {
 }
 function goFull(n) { showScreen('full-' + n); }
 function goCredits(n) { showScreen('credits-' + n); }
-function goInboxes(n) { showScreen('inboxes-' + n); }
+function goInboxes(n) { showScreen('inboxes-' + n); if (n === 2) refreshSmUI(); }
 
 function updateFull() {
   S.clients_goal = Math.max(1, parseInt($('clients-goal').value) || 1);
@@ -532,12 +583,147 @@ function selectSeq(el, n) {
   updateFull();
 }
 
+/* ---- Scaledmail helpers ---- */
+function toggleSmProvider(el, prov) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    if (!S.sm_providers.includes(prov)) S.sm_providers.push(prov);
+  } else {
+    S.sm_providers = S.sm_providers.filter(p => p !== prov);
+    if (S.sm_providers.length === 0) { el.classList.add('selected'); S.sm_providers.push(prov); return; }
+  }
+  rebalanceDistribution();
+  refreshSmUI();
+}
+function rebalanceDistribution() {
+  const provs = S.sm_providers;
+  S.sm_distribution = { google: 0, outlook: 0, smtp: 0 };
+  if (provs.length === 1) { S.sm_distribution[provs[0]] = 100; return; }
+  const base = Math.floor(100 / provs.length);
+  const remainder = 100 - base * provs.length;
+  provs.forEach((p, i) => { S.sm_distribution[p] = base + (i === 0 ? remainder : 0); });
+}
+function updateSmDistInput(prov, val) {
+  val = Math.max(0, Math.min(100, parseInt(val) || 0));
+  S.sm_distribution[prov] = val;
+  const others = S.sm_providers.filter(p => p !== prov);
+  const remaining = 100 - val;
+  if (others.length === 1) { S.sm_distribution[others[0]] = remaining; }
+  else if (others.length === 2) { const half = Math.floor(remaining / 2); S.sm_distribution[others[0]] = half; S.sm_distribution[others[1]] = remaining - half; }
+  refreshSmUI();
+}
+function selectSmTier(el, tier) {
+  S.sm_tier = tier;
+  el.closest('.options').querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  refreshSmUI();
+}
+function selectSmSchedule(el, sched) {
+  S.sm_schedule = sched;
+  el.closest('.options').querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  refreshSmUI();
+}
+function refreshSmUI() {
+  // Update Inboxes wizard preview
+  const previewEl = $('sm-preview-out');
+  if (previewEl && S.ib_emails) {
+    const sm = calcScaledmail(S.ib_emails);
+    previewEl.innerHTML = 'You\'ll need <strong>' + fmt(sm.totalMailboxes) + ' mailboxes</strong> across <strong>' + fmt(sm.totalDomains) + ' domains</strong> &mdash; estimated <strong>$' + sm.totalCost.toFixed(2) + '/mo</strong>';
+  }
+  // Update distribution inputs
+  const distSection = $('sm-distribution-section');
+  if (distSection) {
+    distSection.style.display = S.sm_providers.length > 1 ? '' : 'none';
+    $('sm-distribution-inputs').innerHTML = renderSmDistribution();
+  }
+  // Update Full Flow card if visible
+  if ($('full-infra-result')) updateFullCards();
+}
+function renderSmDistribution() {
+  let h = '';
+  S.sm_providers.forEach(prov => {
+    const cfg = SCALEDMAIL.providers[prov];
+    h += '<div class="edit-row"><span class="edit-label" style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:' + cfg.color + ';display:inline-block"></span>' + cfg.label + '</span>';
+    h += '<div style="display:flex;align-items:center;gap:4px"><input type="number" class="edit-input" style="width:60px" value="' + S.sm_distribution[prov] + '" min="0" max="100" oninput="updateSmDistInput(\'' + prov + '\',this.value)"><span style="font-size:13px;color:var(--tx3)">%</span></div></div>';
+  });
+  return h;
+}
+function renderSmTierSelect(onChange) {
+  const tiers = [['low','Low'],['medium','Medium'],['max','Max']];
+  let h = '<select class="edit-input" style="width:auto;padding:6px 10px" onchange="' + onChange + '">';
+  tiers.forEach(([val,label]) => { h += '<option value="' + val + '"' + (S.sm_tier === val ? ' selected' : '') + '>' + label + '</option>'; });
+  return h + '</select>';
+}
+function renderSmScheduleSelect(onChange) {
+  let h = '<select class="edit-input" style="width:auto;padding:6px 10px" onchange="' + onChange + '">';
+  h += '<option value="weekdays"' + (S.sm_schedule === 'weekdays' ? ' selected' : '') + '>Weekdays (22 days)</option>';
+  h += '<option value="everyday"' + (S.sm_schedule === 'everyday' ? ' selected' : '') + '>Every day (30 days)</option>';
+  return h + '</select>';
+}
+function renderSmProviderCheckboxes(containerId, onClickFn) {
+  const provs = [
+    { key: 'google', desc: '2 mailboxes/domain &bull; $3.50/mailbox' },
+    { key: 'outlook', desc: '25 mailboxes/domain &bull; $50/domain' },
+    { key: 'smtp', desc: '4 mailboxes/domain &bull; $3.75/domain' }
+  ];
+  let h = '<div class="options" id="' + containerId + '">';
+  provs.forEach(p => {
+    const sel = S.sm_providers.includes(p.key) ? ' selected' : '';
+    const cfg = SCALEDMAIL.providers[p.key];
+    h += '<div class="opt' + sel + '" onclick="' + onClickFn + '(this,\'' + p.key + '\')"><div class="checkbox"></div><div class="opt-body"><div class="opt-title">' + cfg.label + '</div><div class="opt-desc">' + p.desc + '</div></div></div>';
+  });
+  h += '</div>';
+  return h;
+}
+function renderProviderBreakdown(sm) {
+  let h = '';
+  S.sm_providers.forEach(prov => {
+    const r = sm.providers[prov];
+    const cfg = SCALEDMAIL.providers[prov];
+    const pct = S.sm_providers.length > 1 ? ' (' + S.sm_distribution[prov] + '%)' : '';
+    h += '<div style="background:var(--bg2);border-radius:var(--r-md);padding:14px;margin-bottom:8px;border-left:4px solid ' + cfg.color + '">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    h += '<span style="font-weight:700;font-size:14px;color:var(--tx1)">' + cfg.label + pct + '</span>';
+    h += '<span style="font-weight:700;font-size:14px;color:var(--purple)">$' + r.cost.toFixed(2) + '/mo</span></div>';
+    h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--tx2)">';
+    h += '<span>' + fmt(r.domains) + ' domains</span><span>' + fmt(r.mailboxes) + ' mailboxes</span><span>' + r.emailsPerMbxPerDay + ' emails/mbx/day</span></div>';
+    h += '<div style="font-size:11px;color:var(--tx3);margin-top:4px">' + fmt(r.domains) + ' domains &times; $' + cfg.pricePerDomain.toFixed(2) + ' = $' + r.cost.toFixed(2) + ' <span style="opacity:.6">($' + (cfg.pricePerDomain / cfg.mbxPerDomain).toFixed(2) + '/mailbox)</span></div>';
+    h += '</div>';
+  });
+  return h;
+}
+function renderInfraCard(totalEmails) {
+  const sm = calcScaledmail(totalEmails);
+  let h = '';
+  // Provider checkboxes
+  h += '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:8px">Email Providers</div>';
+  h += renderSmProviderCheckboxes('full-sm-provs', 'toggleSmProvider');
+  // Distribution
+  if (S.sm_providers.length > 1) {
+    h += '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:8px;margin-top:16px">Volume Distribution</div>';
+    S.sm_providers.forEach(prov => {
+      const cfg = SCALEDMAIL.providers[prov];
+      h += '<div class="edit-row"><span class="edit-label" style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:' + cfg.color + ';display:inline-block"></span>' + cfg.label + '</span>';
+      h += '<div style="display:flex;align-items:center;gap:4px"><input type="number" class="edit-input" style="width:60px" value="' + S.sm_distribution[prov] + '" min="0" max="100" oninput="updateSmDistInput(\'' + prov + '\',this.value)"><span style="font-size:13px;color:var(--tx3)">%</span></div></div>';
+    });
+  }
+  // Tier + Schedule
+  h += '<div style="display:flex;gap:12px;margin:16px 0;flex-wrap:wrap">';
+  h += '<div style="flex:1;min-width:140px"><div class="edit-label" style="margin-bottom:4px">Sending tier</div>' + renderSmTierSelect('S.sm_tier=this.value;updateFullCards()') + '</div>';
+  h += '<div style="flex:1;min-width:140px"><div class="edit-label" style="margin-bottom:4px">Schedule</div>' + renderSmScheduleSelect('S.sm_schedule=this.value;updateFullCards()') + '</div></div>';
+  // Results
+  h += '<div class="result-card-big" style="margin-top:12px">' + fmt(sm.totalMailboxes) + ' <span>mailboxes</span></div>';
+  h += '<div class="result-card-sub">' + fmt(sm.totalDomains) + ' domains &bull; $' + sm.totalCost.toFixed(2) + '/mo total</div>';
+  h += renderProviderBreakdown(sm);
+  h += '<div class="tip" style="margin-top:12px;margin-bottom:0">Prices shown are <strong>Scaledmail</strong> monthly mailbox costs. Domain purchases (e.g. Porkbun, GoDaddy) are separate.</div>';
+  return h;
+}
+
 /* ---- Full result ---- */
 function showFullResult() {
   updateFull();
   S.full_contact = ['verified'];
-  S.full_per_inbox = 20;
-  S.full_days = 20;
   const g = S.clients_goal, pl = g === 1 ? '' : 's';
 
   // Build funnel data (top = widest = most volume, bottom = narrowest = goal)
@@ -574,19 +760,12 @@ function showFullResult() {
   h += contactOpts('full-contact-opts', 'toggleFullContact', S.full_contact);
   h += '<div id="full-credits-result"></div></div>';
 
-  // Card 3: Inboxes
-  h += '<div class="result-card accent-teal"><div class="result-card-title">Inboxes Needed</div>';
+  // Card 3: Sending Infrastructure (Scaledmail)
+  h += '<div class="result-card accent-teal"><div class="result-card-title">Sending Infrastructure</div>';
   h += '<div class="result-card-sub">Based on sending ' + fmt(S.emails) + ' emails per month</div>';
-  h += '<div class="edit-row"><span class="edit-label">Emails per inbox per day</span><input type="number" class="edit-input" id="full-per-inbox" value="20" min="1" max="200" oninput="updateFullCards()"></div>';
-  h += '<div class="edit-row"><span class="edit-label">Sending days per month</span><input type="number" class="edit-input" id="full-days" value="20" min="1" max="31" oninput="updateFullCards()"></div>';
-  h += '<div id="full-inboxes-result"></div></div>';
+  h += '<div id="full-infra-result"></div></div>';
 
-  // Card 4: Domains
-  h += '<div class="result-card accent-amber"><div class="result-card-title">Domains Needed</div>';
-  h += '<div id="full-domains-result"></div>';
-  h += '<div class="tip" style="margin-top:12px;margin-bottom:0">Each domain should have max 3 inboxes for deliverability</div></div>';
-
-  // Card 5: ROI
+  // Card 4: ROI
   h += '<div class="result-card accent-green"><div class="result-card-title">Projected ROI</div>';
   h += '<div id="full-roi-result"></div></div>';
 
@@ -641,19 +820,16 @@ function updateFullCards() {
     ch += '<div class="tip" style="margin-top:16px">Consider switching to verified emails &mdash; they significantly improve deliverability and are worth the extra credit.</div>';
   $('full-credits-result').innerHTML = ch;
 
-  S.full_per_inbox = Math.max(1, parseInt($('full-per-inbox').value) || 20);
-  S.full_days = Math.max(1, parseInt($('full-days').value) || 20);
-  const inboxes = Math.ceil(S.emails / (S.full_per_inbox * S.full_days));
-  let ih = '<div class="result-card-big" style="margin-top:12px">' + fmt(inboxes) + ' <span>inboxes</span></div>';
-  ih += '<div class="result-card-sub">' + fmt(S.emails) + ' emails &divide; (' + S.full_per_inbox + ' &times; ' + S.full_days + ') = ' + fmt(inboxes) + ' inboxes</div>';
-  $('full-inboxes-result').innerHTML = ih;
+  // Infrastructure card
+  $('full-infra-result').innerHTML = renderInfraCard(S.emails);
+  const sm = calcScaledmail(S.emails);
 
-  const domains = Math.ceil(inboxes / 3);
-  $('full-domains-result').innerHTML = '<div class="result-card-big">' + fmt(domains) + ' <span>domains</span></div><div class="result-card-sub">' + fmt(inboxes) + ' inboxes &divide; 3 = ' + fmt(domains) + ' domains</div>';
-
+  // ROI card (includes both credit cost + infrastructure cost)
   const monthlyRevenue = S.clients_goal * S.ltv;
   const best = getBestPlan(totalCr);
-  const cost = best.totalCost;
+  const creditCost = best.totalCost;
+  const infraCost = sm.totalCost;
+  const cost = creditCost + infraCost;
   const planName = best.plan.name;
   const roi = cost > 0 ? Math.round((monthlyRevenue / cost) * 100) / 100 : 0;
   const cac = S.clients_goal > 0 ? Math.round((cost / S.clients_goal) * 100) / 100 : 0;
@@ -666,12 +842,16 @@ function updateFullCards() {
   rh += '</div>';
   rh += '<div style="font-size:14px;color:var(--tx2);margin-top:14px;margin-bottom:16px;line-height:1.8">';
   rh += 'Projected revenue: <strong style="color:var(--green)">$' + fmt(monthlyRevenue) + '/mo</strong> (' + fmt(S.clients_goal) + ' clients &times; $' + fmt(S.ltv) + ' LTV)<br>';
-  rh += 'ListKit cost: <strong>$' + fmt(cost) + '/mo</strong> (' + planName;
+  rh += 'ListKit credits: <strong>$' + fmt(creditCost) + '/mo</strong> (' + planName;
   if (best.addonCost > 0) rh += ' + $' + fmt(best.addonCost) + ' add-ons';
-  rh += ')</div>';
+  rh += ')<br>';
+  rh += 'Scaledmail infra: <strong>$' + fmt(infraCost) + '/mo</strong> (' + fmt(sm.totalMailboxes) + ' mailboxes, ' + fmt(sm.totalDomains) + ' domains)<br>';
+  rh += 'Total cost: <strong style="color:var(--purple)">$' + fmt(cost) + '/mo</strong></div>';
   rh += '<div style="background:var(--bg2);border-radius:var(--r-md);padding:16px;margin-bottom:16px">';
   rh += '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-bottom:12px">Cost to Acquire a Client</div>';
-  rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">ListKit cost per month</span><span style="font-weight:600">$' + fmt(cost) + '</span></div>';
+  rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">ListKit credits per month</span><span style="font-weight:600">$' + fmt(creditCost) + '</span></div>';
+  rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">Scaledmail infra per month</span><span style="font-weight:600">$' + fmt(infraCost) + '</span></div>';
+  rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">Total monthly cost</span><span style="font-weight:700;color:var(--purple)">$' + fmt(cost) + '</span></div>';
   rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">Clients closed per month</span><span style="font-weight:600">' + fmt(S.clients_goal) + '</span></div>';
   rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">Cost per client (CAC)</span><span style="font-weight:700;color:var(--purple)">$' + fmt(cac) + '</span></div>';
   rh += '<div class="edit-row" style="border-bottom:1px solid var(--bd3)"><span class="edit-label">Revenue per client (LTV)</span><span style="font-weight:700;color:var(--green)">$' + fmt(S.ltv) + '</span></div>';
@@ -775,17 +955,13 @@ function updateIbQb() {
 function setIbEmails(v) { S.ib_emails = v; $('ib-emails').value = v; updateIbQb(); }
 
 function showInboxesResult() {
-  S.ib_per_inbox = Math.max(1, parseInt($('ib-per-inbox').value) || 20);
-  S.ib_days = Math.max(1, parseInt($('ib-days').value) || 20);
-  const inboxes = Math.ceil(S.ib_emails / (S.ib_per_inbox * S.ib_days));
-  const domains = Math.ceil(inboxes / 3);
-  let h = '<div class="result-card accent-teal"><div class="result-card-title">Inboxes Needed</div>';
-  h += '<div class="result-card-big">' + fmt(inboxes) + ' <span>inboxes</span></div>';
-  h += '<div class="result-card-sub">' + fmt(S.ib_emails) + ' emails &divide; (' + S.ib_per_inbox + ' &times; ' + S.ib_days + ') = ' + fmt(inboxes) + ' inboxes</div></div>';
-  h += '<div class="result-card accent-amber"><div class="result-card-title">Domains Needed</div>';
-  h += '<div class="result-card-big">' + fmt(domains) + ' <span>domains</span></div>';
-  h += '<div class="result-card-sub">' + fmt(inboxes) + ' inboxes &divide; 3 = ' + fmt(domains) + ' domains</div>';
-  h += '<div class="tip" style="margin-top:12px;margin-bottom:0">Each domain should have max 3 inboxes for deliverability</div></div>';
+  const sm = calcScaledmail(S.ib_emails);
+  let h = '<div class="result-card accent-teal"><div class="result-card-title">Sending Infrastructure</div>';
+  h += '<div class="result-card-big">' + fmt(sm.totalMailboxes) + ' <span>mailboxes</span></div>';
+  h += '<div class="result-card-sub">' + fmt(sm.totalDomains) + ' domains &bull; $' + sm.totalCost.toFixed(2) + '/mo &bull; ' + fmt(S.ib_emails) + ' emails/month</div>';
+  h += renderProviderBreakdown(sm);
+  h += '<div class="tip" style="margin-top:12px;margin-bottom:0">Prices shown are <strong>Scaledmail</strong> monthly mailbox costs. Domain purchases (e.g. Porkbun, GoDaddy) are separate.</div>';
+  h += '</div>';
   $('inboxes-result-content').innerHTML = h;
   showScreen('inboxes-result');
 }
